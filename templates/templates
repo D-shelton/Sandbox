@@ -14,8 +14,16 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 run = True
 while run:
+    screen.fill(0, 0, 0)
+    
+    key = pygame.key.get_pressed()
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
+
+    
+
+    pygame.display.update()
 
 pygame.quit()
