@@ -4,14 +4,15 @@ pygame.init()
 
 SCREEN_WIDTH = 1024
 SCREEN_HEIGHT = 768
+MAIN_MENU_OFFSET = 50
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-main_menu = pygame.Rect(25, 25, (SCREEN_WIDTH-25), (SCREEN_HEIGHT-25))
+main_menu = pygame.Rect(MAIN_MENU_OFFSET, MAIN_MENU_OFFSET, (SCREEN_WIDTH-MAIN_MENU_OFFSET), (SCREEN_HEIGHT-MAIN_MENU_OFFSET))
 run = True
 while run:
 
-    screen.fill(0,0,0)
+    #screen.fill(0,0,0)
 
     pygame.draw.rect(screen, (125, 0, 175), main_menu)
 
