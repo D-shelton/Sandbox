@@ -12,7 +12,7 @@ main_menu = pygame.Rect(MAIN_MENU_OFFSET, MAIN_MENU_OFFSET, (SCREEN_WIDTH - (MAI
 run = True
 while run:
 
-    #screen.fill(0,0,0)
+    screen.fill('black')
 
     pygame.draw.rect(screen, (125, 0, 175), main_menu)
 
