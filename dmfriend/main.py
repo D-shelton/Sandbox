@@ -8,17 +8,8 @@ SCREEN_HEIGHT = 768
 #sets window size
 MAIN_MENU_OFFSET = 50
 #sets width between edge of menu and edge of program window
-
-
-
-def roll_dice(num, sides):
-    #die rolling logic, take number and sides, return list of rolled numbers
-    rolled_nums = []
-    for i in range(num):
-        roll = random.randint(1, sides)
-        rolled_nums.append(roll)
-    return rolled_nums
-
+NUM_STATS = 6
+#sets number of stats to be rolled, 6 for D&D
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 #define program window size as screen
