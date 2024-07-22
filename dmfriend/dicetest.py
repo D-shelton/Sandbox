@@ -1,8 +1,25 @@
 import random
 NUM_STATS = 6
 
+def find_method():
+    method = input(
+        "Please select the method you wish to use to roll stats.\n"
+        "[1] 3d6\n"
+        "[2] 4d6 drop lowest\n"
+        "[3] Mighty 3d6 - 1 guaranteed 6 per stat\n"
+        )
+    if method == '1':
+        result = roll_straight()
+        return result
 
+    if method == '2':
+        result = roll_4d6()
+        return result
 
+    if method == '3':
+        result = roll_mighty3d6()
+        return result
+       
 def roll_dice(num, sides):
     #dice roll function, rolls {num}D{sides}, returns list of rolls
     rolled_nums = []
@@ -20,7 +37,8 @@ def roll_straight():
         total_roll = sum(dice_roll)
         statblock.append(total_roll)
         fullroll.append(dice_roll)
-    return statblock, fullroll
+    print(f"Your rolls were {fullroll}\n")
+    return statblock
 
 def roll_4d6():
     #modern roll 4d6 drop 1 method
@@ -40,7 +58,8 @@ def roll_4d6():
         #fullroll shows individual dice in lists divided by roll
         statblock.append(sum(dice_roll))
         #single list with number of rolls equal to NUM_STATS
-    return statblock, fullroll
+    print(f"Your rolls were {fullroll}")
+    return statblock
 
 
 def roll_mighty3d6():
@@ -52,7 +71,8 @@ def roll_mighty3d6():
         dice_roll.append(6)
         fullroll.append(dice_roll)
         statblock.append(sum(dice_roll))
-    return statblock, fullroll
+    print(f"Your rolls were {fullroll}")
+    return statblock
 
 def main():
     method = input(
