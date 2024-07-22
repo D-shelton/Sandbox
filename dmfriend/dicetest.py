@@ -54,30 +54,30 @@ def roll_mighty3d6():
         statblock.append(sum(dice_roll))
     return statblock, fullroll
 
+def main():
+    method = input(
+        "Welcome to Uncle DenDen's D&D Stat roller.\n"
+        "Please select the method you wish to use to roll stats.\n"
+        "[1] 3d6 in order\n"
+        "[2] 4d6 drop lowest\n"
+        "[3] Mighty 3d6\n"
+        )
 
-method = input(
-    "Welcome to Uncle DenDen's D&D Stat roller.\n"
-    "Please select the method you wish to use to roll stats.\n"
-    "[1] 3d6 in order\n"
-    "[2] 4d6 drop lowest\n"
-    "[3] Mighty 3d6\n"
-    )
+    if method == '1':
+        result = roll_straight()
+        print(f"You rolled {result}")
 
-if method == '1':
-    result = roll_straight()
-    print(f"You rolled {result}")
-    exit
-if method == '2':
-    result = roll_4d6()
-    print(f"You rolled {result}")
-    exit
-if method == '3':
-    result = roll_mighty3d6()
-    print(f"You rolled {result}")
-    exit
+    if method == '2':
+        result = roll_4d6()
+        print(f"You rolled {result}")
 
+    if method == '3':
+        result = roll_mighty3d6()
+        print(f"You rolled {result}")
     
 
 
-    
+if __name__ == '__main__':
+    main()
+
 
