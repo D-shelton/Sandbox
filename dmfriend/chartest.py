@@ -1,7 +1,7 @@
 from dicetest import *
 #GOAL: Create a new character using 5e rules and dicetest.py for rolling
 #MILESTONE: Create "character" with name and stats
-#TO DO: Build newchar template, set charname func, roll stats
+#TO DO: apply remaining roll methods to character creation, build stat assignment functions
 INTRO = "Welcome to Uncle DenDen's 5e Character Creator\n\n[M]ake a new character\n[U]pdate a character\n[Q]Quit\n"
 NEWCHAR = {
     "charName": None,
@@ -24,11 +24,15 @@ def main():
     choice = input(INTRO)
     while choice.lower() != "q":
         if choice.lower() == 'm':
-            make_char()
-            choice = input(INTRO)
+            char = make_char()
+            again = input("\nWould you like to make another character? Y/N: ")
+            if again.lower() == 'n':
+                choice = 'q'
+
+
+
         if choice.lower() == 'u':
-            print("\nUpdating a character is not supported yet\n")
-            choice = input(INTRO)
+            choice = input("\nUpdating a character is not supported yet, type [m] to make a character and [q] to quit \n")
         if choice.lower() == "q":
             print("Thank you")
             exit
