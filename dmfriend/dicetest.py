@@ -28,6 +28,10 @@ def roll_dice(num, sides):
         rolled_nums.append(roll)
     return rolled_nums
 
+def assign_value(rolled_stats):
+    for i in range(0, len(rolled_stats)):
+        pass
+
 def roll_straight():
     #rolls stats straight in a row, D&D1e method
     statblock = []
