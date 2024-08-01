@@ -1,4 +1,5 @@
 import random
+STATS = ["str","dex","con","int","wis","cha"]
 NUM_STATS = 6
 
 def find_method():
@@ -29,8 +30,30 @@ def roll_dice(num, sides):
     return rolled_nums
 
 def assign_value(rolled_stats):
+    available_stats = STATS
+    returned_stats = {}
+    available_rolls = rolled_stats
     for i in range(0, len(rolled_stats)):
-        pass
+        print(f"Your available rolls are {available_rolls}")
+        current_stat = input("Which stat would you like to set?\n")
+        while available_rolls:
+            if current_stat in available_stats:
+                print(f"Your available rolls are {available_rolls}")
+                current_val = input("Which number would you like to assign?\n" )
+                while current_val:
+                    if current_val in available_rolls:
+                        returned_stats[current_stat] = current_val
+                        available_rolls.pop(current_val)
+                        available_stats.pop(current_stat)
+                        current_val = False
+                    else: 
+                        print(f"Your available rolls are {available_rolls}")
+                        current_val = input("Which number would you like to assign?\n" )
+            else:
+                print(f"Your available rolls are {available_rolls}")
+                current_stat = input("Which stat would you like to set?\n")
+    return returned_stats
+
 
 def roll_straight():
     #rolls stats straight in a row, D&D1e method
@@ -93,11 +116,13 @@ def main():
 
     if method == '2':
         result = roll_4d6()
-        print(f"You rolled {result}")
+        picked_stats = assign_value(result)
+        print(f"You rolled {picked_stats}")
 
     if method == '3':
         result = roll_mighty3d6()
-        print(f"You rolled {result}")
+        picked_stats = assign_value(result)
+        print(f"Your stats are {picked_stats}")
     
 
 
