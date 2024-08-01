@@ -86,8 +86,6 @@ def roll_4d6():
         statblock.append(sum(dice_roll))
         #single list with number of rolls equal to NUM_STATS
     print(f"Your rolls were {fullroll}")
-    statblock = assign_stats(statblock)
-    #assign_stats(statblock) will take the statblock and let the user assign values to stats
     return statblock
 
 
