@@ -59,7 +59,7 @@ def roll_straight():
     #rolls stats straight in a row, D&D1e method
     statblock = []
     fullroll = []
-    for i in range(NUM_STATS):
+    for i in range(len(STATS)):
         dice_roll = roll_dice(3, 6)
         total_roll = sum(dice_roll)
         statblock.append(total_roll)
@@ -71,7 +71,7 @@ def roll_4d6():
     #modern roll 4d6 drop 1 method
     statblock = []
     fullroll = []
-    for i in range(NUM_STATS):
+    for i in range(len(STATS)):
     #rolls stats equal to NUM_STATS
         dice_roll = roll_dice(4, 6)
         lowest = 21
@@ -86,6 +86,8 @@ def roll_4d6():
         statblock.append(sum(dice_roll))
         #single list with number of rolls equal to NUM_STATS
     print(f"Your rolls were {fullroll}")
+    statblock = assign_stats(statblock)
+    #assign_stats(statblock) will take the statblock and let the user assign values to stats
     return statblock
 
 
@@ -93,7 +95,7 @@ def roll_mighty3d6():
     #Roll 2d6+6 for stats, statblock is list of stats, fullroll is individual dice rolls
     statblock = []
     fullroll = []
-    for i in range(NUM_STATS):
+    for i in range(len(STATS)):
         dice_roll = roll_dice(2, 6)
         dice_roll.append(6)
         fullroll.append(dice_roll)
