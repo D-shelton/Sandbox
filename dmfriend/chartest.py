@@ -1,7 +1,7 @@
 from dicetest import *
 #GOAL: Create a new character using 5e rules and dicetest.py for rolling
 #MILESTONE: Choose any of the three methods to create a new character
-#TO DO: apply remaining roll methods to character creation, build stat assignment functions
+#TO DO: build stat assignment functions
 INTRO = "Welcome to Uncle DenDen's 5e Character Creator\n\n[M]ake a new character\n[U]pdate a character\n[Q]Quit\n"
 NEWCHAR = {
     "charName": None,
