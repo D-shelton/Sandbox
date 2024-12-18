@@ -40,7 +40,7 @@ def assign_value(rolled_stats):
             if current_stat in available_stats:
                 print(f"Your available rolls are {available_rolls}")
                 current_val = input("Which number would you like to assign?\n" )
-                while current_val:
+                while current_val in available_rolls:
                     if current_val in available_rolls:
                         returned_stats[current_stat] = current_val
                         available_rolls.pop(current_val)

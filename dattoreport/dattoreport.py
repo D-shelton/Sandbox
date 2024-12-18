@@ -26,6 +26,10 @@ import base64
 #############
 
 # API login info
+# TODO - Set up .env file with key info, put .env in GITIGNORE folder
+# https://pypi.org/project/python-dotenv/
+# https://docs.pydantic.dev/latest/concepts/pydantic_settings/
+
 username = "44bf61"
 password = "Private Key"
 
@@ -48,51 +52,52 @@ username = 'data'
 password = 'password'
 connectionString = f'Driver={{SQL Server Native Client 11.0}};SERVER={server};DATABASE={database};UID={username};PWD={password};'
 
+def main():
+    # Make GET call from datto info above
+    response = requests.get(url, headers=headers)
 
-# Make GET call from datto info above
-response = requests.get(url, headers=headers)
+    # Check response - if not valid return error
+    if response.status_code != 200:
+        print(f"Error with GET from datto: {response.status_code}, {response.text}")
+        exit(1) 
+    # Else call success, put json data into dict - print to test
+    else:
+        print("Call successful, report being prepared")
+        raw_data = response.json()
 
-# Check response - if not valid return error
-if response.status_code != 200:
-    print(f"Error with GET from datto: {response.status_code}, {response.text}")
-    exit(1) 
-# Else call success, put json data into dict - print to test
-else:
-    print("Call successful, report being prepared")
-    raw_data = response.json()
+    ####################
+    # PRINTING TO TEST #
+    ####################
 
-####################
-# PRINTING TO TEST #
-####################
+    # if response is good
+    if response.status_code == 200:
+        # iterate over clients in raw_data
+        for client in raw_data["clients"]:
+            # sets client's name in variable and prints it
+            client_name = client.get("clientName")
+            print(f"Client Name: {client_name}")
 
-# if response is good
-if response.status_code == 200:
-    # iterate over clients in raw_data
-    for client in raw_data["clients"]:
-        # sets client's name in variable and prints it
-        client_name = client.get("clientName")
-        print(f"Client Name: {client_name}")
+            # iterate over each agent under client
+            for agent in client.get("agents", []):
+                # gets hostname for agent
+                hostname = agent.get("hostname")
+                # gets boolean value representing success
+                screenshot_success = agent.get("screenshotSuccess")
 
-        # iterate over each agent under client
-        for agent in client.get("agents", []):
-            # gets hostname for agent
-            hostname = agent.get("hostname")
-            # gets boolean value representing success
-            screenshot_success = agent.get("screenshotSuccess")
-
-            # prints agent name and screenshot success
-            if screenshot_success != True:
-                print("Screenshot Failed")
-
-
-
-
-#conn = pyodbc.connect(connectionString)
-#cursor = conn.cursor()
-
-    
+                # prints agent name and screenshot success
+                if screenshot_success != True:
+                    print("Screenshot Failed")
 
 
 
+
+    #conn = pyodbc.connect(connectionString)
+    #cursor = conn.cursor()
+
+        
+
+
+if __name__ == '__dattoreport__':
+    main()
 
 
