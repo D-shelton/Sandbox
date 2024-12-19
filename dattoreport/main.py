@@ -1,7 +1,9 @@
+import os
 import requests
 import pyodbc
 import json
 import base64
+from dotenv import load_dotenv
 
 ######################################
 #           USED LIBRARIES           #
@@ -10,7 +12,10 @@ import base64
 # python -m pip install requests     #
 #                                    #
 # 2. pyodbc - Used to connect to SQL #
-# pip install pyodbc                 #  
+# pip install pyodbc                 #
+#                                    #
+# 3. dotenv - used to load API data  #
+# pip install python-dotenv          #  
 ######################################
 #        ADDITIONAL INSTALLS         #
 ######################################
@@ -25,13 +30,10 @@ import base64
 # dattoinfo #
 #############
 
-# API login info
-# TODO - Set up .env file with key info, put .env in GITIGNORE folder
-# https://pypi.org/project/python-dotenv/
-# https://docs.pydantic.dev/latest/concepts/pydantic_settings/
-
-username = "Username"
-password = "Private Key"
+# loads API key info from .env
+load_dotenv()
+username = os.getenv('DATTO_PUBLIC_KEY')
+password = os.getenv('DATTO_PRIVATE_KEY')
 
 # Build headers to log in and encode
 auth_string = f"{username}:{password}"
@@ -54,12 +56,14 @@ connectionString = f'Driver={{SQL Server Native Client 11.0}};SERVER={server};DA
 
 def formatResponse(raw_data):
     # iterate over clients in raw_data
+        print("starting iteration over clients")
         for client in raw_data["clients"]:
             # sets client's name in variable and prints it
             client_name = client.get("clientName")
             print(f"Client Name: {client_name}")
 
             # iterate over each agent under client
+            print("starting iteration over agents")
             for agent in client.get("agents", []):
                 # gets hostname for agent
                 hostname = agent.get("hostname")
@@ -69,6 +73,22 @@ def formatResponse(raw_data):
                 # prints agent name and screenshot success
                 if screenshot_success != True:
                     print("Screenshot Failed")
+
+def tableCheck(cursor):
+    table_name = 'datto'
+    cursor.execute(f"""
+        IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{table_name}')
+        BEGIN
+            CREATE TABLE backups (
+                id INT PRIMARY KEY IDENTITY(1,1),
+                client_id INT NOT NULL,
+                client_name NVARCHAR(100),
+                backup_status NVARCHAR(50),
+                backup_date DATETIME NOT NULL,
+                CONSTRAINT FK_Client FOREIGN KEY(client_id) REFERENCES clients(client_id)
+            );
+        END;
+                """)
     
 
 def main():
@@ -83,20 +103,17 @@ def main():
     else:
         print("Call successful, report being prepared")
         raw_data = response.json()
-        formatResponse(raw_data)
+        print(json.dumps(raw_data, indent=4))
+
+
+    conn = pyodbc.connect(connectionString)
+    cursor = conn.cursor()
+    tableCheck(cursor)
 
         
 
 
-
-
-    #conn = pyodbc.connect(connectionString)
-    #cursor = conn.cursor()
-
-        
-
-
-if __name__ == '__dattoreport__':
+if __name__ == '__main__':
     main()
 
 
