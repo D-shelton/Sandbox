@@ -106,9 +106,9 @@ def main():
         print(json.dumps(raw_data, indent=4))
 
 
-    conn = pyodbc.connect(connectionString)
-    cursor = conn.cursor()
-    tableCheck(cursor)
+    # conn = pyodbc.connect(connectionString)
+    # cursor = conn.cursor()
+    # tableCheck(cursor)
 
         
 
