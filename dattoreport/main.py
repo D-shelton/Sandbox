@@ -40,7 +40,8 @@ auth_string = f"{username}:{password}"
 encoded_auth_string = base64.b64encode(auth_string.encode()).decode('utf-8')
 
 # url to access and header to use
-url = "https://api.datto.com/v1/bcdr/agent?_page=1&_perPage=100" 
+# TODO - Update URL to use /device for pulling list of serials, add second URL Variable for device-specific call using serial
+url = "https://api.datto.com/v1/bcdr" 
 headers = {'Authorization': f'Basic {encoded_auth_string}'} 
 
 
@@ -54,25 +55,25 @@ username = 'data'
 password = 'password'
 connectionString = f'Driver={{SQL Server Native Client 11.0}};SERVER={server};DATABASE={database};UID={username};PWD={password};'
 
-def formatResponse(raw_data):
+#def formatResponse(raw_data):
     # iterate over clients in raw_data
-        print("starting iteration over clients")
-        for client in raw_data["clients"]:
+        #print("starting iteration over clients")
+        #for client in raw_data["clients"]:
             # sets client's name in variable and prints it
-            client_name = client.get("clientName")
-            print(f"Client Name: {client_name}")
+            #client_name = client.get("clientName")
+            #print(f"Client Name: {client_name}")
 
             # iterate over each agent under client
-            print("starting iteration over agents")
-            for agent in client.get("agents", []):
+            #print("starting iteration over agents")
+            #for agent in client.get("agents", []):
                 # gets hostname for agent
-                hostname = agent.get("hostname")
+                #hostname = agent.get("hostname")
                 # gets boolean value representing success
-                screenshot_success = agent.get("screenshotSuccess")
+                #screenshot_success = agent.get("screenshotSuccess")
 
                 # prints agent name and screenshot success
-                if screenshot_success != True:
-                    print("Screenshot Failed")
+                #if screenshot_success != True:
+                    #print("Screenshot Failed")
 
 def tableCheck(cursor):
     table_name = 'datto'
@@ -101,10 +102,13 @@ def main():
         exit(1) 
     # Else call success, put json data into dict - print to test
     else:
-        print("Call successful, report being prepared")
+        print("Call successful, device list being prepared")
         raw_data = response.json()
-        print(json.dumps(raw_data, indent=4))
 
+# TODO - rebuild MAIN 
+# get list of devices serialNumber from raw_data
+# for device in list, make call to URL/device/serialNumber/asset to gather device-specific info
+# manage device specific info (i.e. add to Excel spreadsheet or SQL table)
 
     # conn = pyodbc.connect(connectionString)
     # cursor = conn.cursor()
