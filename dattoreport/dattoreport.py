@@ -140,8 +140,9 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
 # main func to pull and report data
 def datto_report():
     # get list of active devices
+    print(f"Retrieving Device list")
     devices = get_active()
-
+    
     # Check for return of None to report error
     if devices is None or not devices:
         print("No devices found/retrieved")
@@ -152,6 +153,7 @@ def datto_report():
     # Iterate over devices
     for device in devices:
         # Get serialNumber for device
+        print(f"{device}")
         serialNumber = device.get("serialNumber")
         # if serial is found check for backups
         if serialNumber:
