@@ -6,6 +6,8 @@ import base64
 from dotenv import load_dotenv
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
+from datetime import datetime
+from openpyxl.styles import NamedStyle
 
 ######################################
 #           USED LIBRARIES           #
@@ -51,6 +53,10 @@ url = "https://api.datto.com/v1/bcdr"
 headers = {'Authorization': f'Basic {encoded_auth_string}'} 
 
 
+# creates date format for excel file
+date_style = NamedStyle(name="datetime", number_format="YYYY-MM-DD HH:MM:SS")
+
+
 # call to get list of active devices
 # libs - requests, json
 def get_active():
@@ -58,17 +64,43 @@ def get_active():
     device_url = f"{url}/device"
 
     try:
-        # sets response to get device list in response
-        response = requests.get(device_url, headers=headers)
+        # create list for devices
+        devices = [] 
+        while device_url:
+            # sets response to get device list in response
+            response = requests.get(device_url, headers=headers)
 
-        # check return status code
-        if response.status_code == 200:
-            return response.json()
-        # if failed print error code and message
-        else:   
-            print(f"Error: Failed Device retrieval -  Code:{response.status_code}, Text:{response.text}")
-            return None
+            # check return status code
+            if response.status_code == 200:
+                # parse json response
+                data = response.json()
+                
+                # iterate over clients to get client name
+                for item in data.get("items", []):
+                    client_name = item.get("organizationName")
+                    serial_number = item.get("serialNumber")
+                    local_used = item.get("localStorageUsed")
+                    local_avail = item.get("localStorageAvailable")
+
+                    if client_name and serial_number:
+                        devices.append({
+                            "clientName": client_name,
+                            "serialNumber": serial_number,
+                            "localUsed" : local_used,
+                            "localAvail" : local_avail
+                        })
+                
+                # Check for more pages
+                device_url = data.get("pagination", {}).get("nextPageUrl")
+
+            
+            else:   
+                print(f"Error: Failed Device retrieval -  Code:{response.status_code}, Text:{response.text}")
+                return None
         
+        print(f"Collected {len(devices)} devices")
+        return devices
+    
     except Exception as e:
         print(f"Exception while retrieving devices: {e}")
         return None
@@ -77,7 +109,7 @@ def get_active():
 # libs - requests, json
 def get_backups(serialNumber):
     # set url to get device info
-    backup_url = f"{url}/{serialNumber}/asset"
+    backup_url = f"{url}/device/{serialNumber}/asset"
 
     try:
         # sets response to get device status
@@ -95,6 +127,24 @@ def get_backups(serialNumber):
     except Exception as e:
         print(f"Exception during retrieval for {serialNumber}: {e}")
         return None
+    
+# used to convert date strings into readable formats
+def parse_date(date_str):
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")  
+    except (ValueError, TypeError):
+        return None  # Return None if the date string is invalid or empty
+    
+
+# used to simplify data used expressions to single string    
+def parse_storage(storage):
+    # type checking for error handling
+    if not isinstance(storage, dict):
+        return "Cant Convert Storage Total - Not a Dictionary"
+
+    size = storage.get('size', 'Unknown')
+    units = storage.get('units', 'Unknown')        
+    return f"{size} {units}"
     
 # writes data to excel workbook
 # libs -  openpyxl
@@ -124,9 +174,17 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
         ws[f"C{row_num}"] = data["agentVersion"]
         ws[f"D{row_num}"] = data["isPaused"]
         ws[f"E{row_num}"] = data["isArchived"]
-        ws[f"F{row_num}"] = data["latestOffsite"]
-        ws[f"G{row_num}"] = data["lastSnapshot"]
-        ws[f"H{row_num}"] = data["lastScreenshotAttempt"]
+
+        # apply date style for relevant fields
+        for date_field in ["latestOffsite", "lastSnapshot", "lastScreenshotAttempt"]:
+            if data.get(date_field):
+                cell = ws[f"{get_column_letter(headers.index(date_field)+1)}{row_num}"]
+                cell.value = data[date_field]
+                cell.style = date_style
+
+        # ws[f"F{row_num}"] = data["latestOffsite"]
+        # ws[f"G{row_num}"] = data["lastSnapshot"]
+        # ws[f"H{row_num}"] = data["lastScreenshotAttempt"]
         ws[f"I{row_num}"] = data["lastScreenshotAttemptStatus"]
         ws[f"J{row_num}"] = data["lastScreenshotUrl"]
         ws[f"K{row_num}"] = data["localStorageUsed"]
@@ -135,14 +193,14 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
     # Save workbook
     wb.save(filename)
     print(f"Data written to {filename}")
-    
+
 
 # main func to pull and report data
 def datto_report():
     # get list of active devices
     print(f"Retrieving Device list")
     devices = get_active()
-    
+
     # Check for return of None to report error
     if devices is None or not devices:
         print("No devices found/retrieved")
@@ -153,33 +211,43 @@ def datto_report():
     # Iterate over devices
     for device in devices:
         # Get serialNumber for device
-        print(f"{device}")
         serialNumber = device.get("serialNumber")
+        device_name = device.get("clientName", "")
+        local_used = parse_storage(device.get("localUsed", ""))
+        local_avail = parse_storage(device.get("localAvail", ""))
         # if serial is found check for backups
         if serialNumber:
             backup_info = get_backups(serialNumber)
+
             # if backups are found
             if backup_info:
-                # import 
-                device_data = {
-                    "serialNumber": serialNumber,
-                    "name": device.get("name", ""),
-                    "agentVersion": backup_info.get("agentVersion", ""),
-                    "isPaused": backup_info.get("isPaused", ""),
-                    "isArchived": backup_info.get("isArchived", ""),
-                    "latestOffsite": backup_info.get("latestOffsite", ""),
-                    "lastSnapshot": backup_info.get("lastSnapshot", ""),
-                    "lastScreenshotAttempt": backup_info.get("lastScreenshotAttempt", ""),
-                    "lastScreenshotAttemptStatus": backup_info.get("lastScreenshotAttemptStatus", ""),
-                    "lastScreenshotUrl": backup_info.get("lastScreenshotUrl", ""),
-                    "localStorageUsed": device.get("localStorageUsed", ""),
-                    "localStorageAvailable": device.get("localStorageAvailable", ""),
-                }
-                
-                # Append the device's data to the list
-                full_backup_data.append(device_data)
+                # check to see if info is in proper format
+                if isinstance(backup_info, list):
+                    for backup in backup_info:
+                        device_data = {
+                            "serialNumber": serialNumber,
+                            "name": device_name,
+                            "agentVersion": backup.get("agentVersion", ""),
+                            "isPaused": backup.get("isPaused", ""),
+                            "isArchived": backup.get("isArchived", ""),
+                            "latestOffsite": parse_date(backup.get("latestOffsite", "")),
+                            "lastSnapshot": parse_date(backup.get("lastSnapshot", "")),
+                            "lastScreenshotAttempt": parse_date(backup.get("lastScreenshotAttempt", "")),
+                            "lastScreenshotAttemptStatus": backup.get("lastScreenshotAttemptStatus", ""),
+                            "lastScreenshotUrl": backup.get("lastScreenshotUrl", ""),
+                            "localStorageUsed": local_used,
+                            "localStorageAvailable": local_avail,
+                        }
+                        
+                        # Append the device's data to the list
+                        full_backup_data.append(device_data)
+                # error check for backup data type (looking for list)
+                else:
+                    print(f"Unexpected format for backup data: {type(backup_info)}")
+            # error check for if backup data is present for device at serialNumber
             else: 
                 print(f"No backup info found for {serialNumber}")
+        # error check for presence of serialNumber
         else:
             print(f"Device serial not found")
 
