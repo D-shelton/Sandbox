@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from openpyxl.styles import NamedStyle
 
 ######################################
-#           USED LIBRARIES           #
+#        INSTALLED LIBRARIES         #
 ######################################
 # 1. Requests - used for API calls   #
 # python -m pip install requests     #
@@ -52,11 +52,12 @@ encoded_auth_string = base64.b64encode(auth_string.encode()).decode('utf-8')
 url = "https://api.datto.com/v1/bcdr" 
 headers = {'Authorization': f'Basic {encoded_auth_string}'} 
 
+##############
 
-# creates date format for excel file
+# Excel - creates date format for excel file
 date_style = NamedStyle(name="datetime", number_format="YYYY-MM-DD HH:MM:SS")
 
-# call to get list of active devices
+# Datto - call to get list of active devices
 # libs - requests, json
 def get_active():
     # set url to get device list
@@ -104,7 +105,7 @@ def get_active():
         print(f"Exception while retrieving devices: {e}")
         return None
     
-# call to get device backup info
+# Datto - call to get device backup info
 # libs - requests, json
 def get_backups(serialNumber):
     # set url to get device info
@@ -127,11 +128,11 @@ def get_backups(serialNumber):
         print(f"Exception during retrieval for {serialNumber}: {e}")
         return None
     
-# used to convert date strings into readable formats
+# Excel - used to convert date strings into readable formats
+# libs - datetime
 def parse_date(date_str):
     # check for valid args
     if not date_str:
-        print(f"{date_str} is not a valid date")
         return None
     
     # converts time in seconds/units to UTC *Note - has to be timezone naive for excel file
@@ -156,7 +157,7 @@ def parse_date(date_str):
     # returns None if no values found
     return None
 
-# used to simplify data used expressions to single string    
+# Excel - used to simplify data used expressions to single string    
 def parse_storage(storage):
     # type checking for error handling
     if not isinstance(storage, dict):
@@ -166,7 +167,7 @@ def parse_storage(storage):
     units = storage.get('units', 'Unknown')        
     return f"{size} {units}"
     
-# writes data to excel workbook
+# Excel - writes data to excel workbook
 # libs -  openpyxl
 def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
     # Create and activate a workbook
@@ -206,9 +207,6 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
                 cell.value = data[date_field]
                 cell.style = date_style
 
-        # ws[f"F{row_num}"] = data["latestOffsite"]
-        # ws[f"G{row_num}"] = data["lastSnapshot"]
-        # ws[f"H{row_num}"] = data["lastScreenshotAttempt"]
         ws[f"I{row_num}"] = data["lastScreenshotAttemptStatus"]
         ws[f"J{row_num}"] = data["lastScreenshotUrl"]
         ws[f"K{row_num}"] = data["localStorageUsed"]
@@ -219,7 +217,10 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
     print(f"Data written to {filename}")
 
 
-# main func to pull and report data
+# Datto - API call process function
+# Reaches out to datto to get list of devices
+# Iterates over devices to get serial numbers
+# Returns dict with nested dicts full of client backup info
 def datto_report():
     # get list of active devices
     print(f"Retrieving Device list")
@@ -274,11 +275,11 @@ def datto_report():
         # error check for presence of serialNumber
         else:
             print(f"Device serial not found")
-
-    write_xlsx(full_backup_data)
+            
+    return full_backup_data
 
 
 if __name__ == "__main__":
     print("Running report directly")
-    datto_report()
+    write_xlsx(datto_report())
             
