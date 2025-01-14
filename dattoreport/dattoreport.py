@@ -6,7 +6,7 @@ import base64
 from dotenv import load_dotenv
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
-from datetime import datetime
+from datetime import datetime, timezone
 from openpyxl.styles import NamedStyle
 
 ######################################
@@ -55,7 +55,6 @@ headers = {'Authorization': f'Basic {encoded_auth_string}'}
 
 # creates date format for excel file
 date_style = NamedStyle(name="datetime", number_format="YYYY-MM-DD HH:MM:SS")
-
 
 # call to get list of active devices
 # libs - requests, json
@@ -130,11 +129,32 @@ def get_backups(serialNumber):
     
 # used to convert date strings into readable formats
 def parse_date(date_str):
-    try:
-        return datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")  
-    except (ValueError, TypeError):
-        return None  # Return None if the date string is invalid or empty
+    # check for valid args
+    if not date_str:
+        print(f"{date_str} is not a valid date")
+        return None
     
+    # converts time in seconds/units to UTC *Note - has to be timezone naive for excel file
+    try:
+        # gets raw time counter
+        timestamp = int(date_str)
+        # converts time counter to a date time format
+        dt = datetime.fromtimestamp(timestamp, timezone.utc)
+        # strips timezone and returns to use
+        return dt.replace(tzinfo=None)
+    
+    except (ValueError, TypeError):
+        pass
+
+    # converts time in string format parsed as ISO 8601
+    for fmt in ("%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ"):
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            continue
+    
+    # returns None if no values found
+    return None
 
 # used to simplify data used expressions to single string    
 def parse_storage(storage):
@@ -153,6 +173,10 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
     wb = Workbook()
     ws = wb.active
     ws.title = "Datto Report"
+
+    # register date style
+    if "datetime" not in wb.named_styles:
+        wb.add_named_style(date_style)
 
     # define headers for columns
     headers = [
