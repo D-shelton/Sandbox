@@ -57,6 +57,21 @@ headers = {'Authorization': f'Basic {encoded_auth_string}'}
 # Excel - creates date format for excel file
 date_style = NamedStyle(name="datetime", number_format="YYYY-MM-DD HH:MM:SS")
 
+# Testing - prints json file
+# libs - json
+
+def print_json(data):
+    try:
+        # If the input is a string, attempt to parse it as a json
+        if isinstance(data, str):
+            data = json.loads(data)
+
+        # Print the JSON object with indents
+        print(json.dumps(data, indent=4, sort_keys=True))
+
+    except (json.JSONDecodeError, TypeError) as e:
+        print(f"Error: Unable to process the provided data. {e}")
+
 # Datto - call to get list of active devices
 # libs - requests, json
 def get_active():
@@ -74,6 +89,7 @@ def get_active():
             if response.status_code == 200:
                 # parse json response
                 data = response.json()
+                # print_json(data)
                 
                 # iterate over clients to get client name
                 for item in data.get("items", []):
@@ -188,7 +204,7 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
 
     # define headers for columns
     headers = [
-        "serialNumber", "name", "agentVersion", "isPaused", "isArchived", 
+        "serialNumber", "Client Name", "Datto Name", "Server Name", "agentVersion", "isPaused", "isArchived", 
         "latestOffsite", "lastSnapshot", "lastScreenshotAttempt", 
         "lastScreenshotAttemptStatus", "lastScreenshotUrl", 
         "localStorageUsed", "localStorageAvailable"
@@ -202,10 +218,12 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
     # Write each device's backup data to following rows
     for row_num, data in enumerate(device_backup_data, 2):  # Start from row 2
         ws[f"A{row_num}"] = data["serialNumber"]
-        ws[f"B{row_num}"] = data["name"]
-        ws[f"C{row_num}"] = data["agentVersion"]
-        ws[f"D{row_num}"] = data["isPaused"]
-        ws[f"E{row_num}"] = data["isArchived"]
+        ws[f"B{row_num}"] = data["Client Name"]
+        ws[f"C{row_num}"] = data["Datto Name"]
+        ws[f"D{row_num}"] = data["Server Name"]
+        ws[f"E{row_num}"] = data["agentVersion"]
+        ws[f"F{row_num}"] = data["isPaused"]
+        ws[f"G{row_num}"] = data["isArchived"]
 
         # apply date style for relevant fields
         for date_field in ["latestOffsite", "lastSnapshot", "lastScreenshotAttempt"]:
@@ -214,10 +232,10 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
                 cell.value = data[date_field]
                 cell.number_format = "YYYY-MM-DD HH:MM:SS"
 
-        ws[f"I{row_num}"] = data["lastScreenshotAttemptStatus"]
-        ws[f"J{row_num}"] = data["lastScreenshotUrl"]
-        ws[f"K{row_num}"] = data["localStorageUsed"]
-        ws[f"L{row_num}"] = data["localStorageAvailable"]
+        ws[f"K{row_num}"] = data["lastScreenshotAttemptStatus"]
+        ws[f"L{row_num}"] = data["lastScreenshotUrl"]
+        ws[f"M{row_num}"] = data["localStorageUsed"]
+        ws[f"N{row_num}"] = data["localStorageAvailable"]
 
     # Save workbook
     if output_filename is None:
@@ -249,12 +267,13 @@ def datto_report():
     for device in devices:
         # Get serialNumber for device
         serialNumber = device.get("serialNumber")
-        device_name = device.get("clientName", "")
+        client_name = device.get("clientName", "")
+        device_name = device.get("name", "")
         local_used = parse_storage(device.get("localUsed", ""))
         local_avail = parse_storage(device.get("localAvail", ""))
         # if serial is found check for backups
         if serialNumber:
-            backup_info = get_backups(serialNumber)
+            backup_info = get_backups(serialNumber)          
 
             # if backups are found
             if backup_info:
@@ -263,7 +282,9 @@ def datto_report():
                     for backup in backup_info:
                         device_data = {
                             "serialNumber": serialNumber,
-                            "name": device_name,
+                            "Client Name": client_name,
+                            "Datto Name" : device_name,
+                            "Server Name": backup.get("name", ""),
                             "agentVersion": backup.get("agentVersion", ""),
                             "isPaused": backup.get("isPaused", ""),
                             "isArchived": backup.get("isArchived", ""),
