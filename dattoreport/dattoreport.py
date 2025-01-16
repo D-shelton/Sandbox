@@ -4,7 +4,7 @@ import pyodbc
 import json
 import base64
 from dotenv import load_dotenv
-from openpyxl import Workbook
+from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from datetime import datetime, timezone
 from openpyxl.styles import NamedStyle
@@ -98,7 +98,7 @@ def get_active():
                 print(f"Error: Failed Device retrieval -  Code:{response.status_code}, Text:{response.text}")
                 return None
         
-        print(f"Collected {len(devices)} devices")
+        print(f"Collected devices")
         return devices
     
     except Exception as e:
@@ -158,7 +158,7 @@ def parse_date(date_str):
     return None
 
 # Excel - used to simplify data used expressions to single string    
-def parse_storage(storage):
+def parse_storage(storage): 
     # type checking for error handling
     if not isinstance(storage, dict):
         return "Cant Convert Storage Total - Not a Dictionary"
@@ -167,17 +167,24 @@ def parse_storage(storage):
     units = storage.get('units', 'Unknown')        
     return f"{size} {units}"
     
-# Excel - writes data to excel workbook
-# libs -  openpyxl
+# Excel - writes data to excel workbook using pre-defined headers
+# libs -  openpyxl, datetime
 def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
-    # Create and activate a workbook
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Datto Report"
+    # Looks for template defined in load_workbook
+    print(f"Loading Template & Writing Report")
+    try:
+        wb = load_workbook(filename)
+    except FileNotFoundError:
+        print(f"Template Not Found")
 
-    # register date style
-    if "datetime" not in wb.named_styles:
-        wb.add_named_style(date_style)
+    # Check for second page of workbook
+    if len(wb.sheetnames) < 2:
+        print(f"Template missing second page")
+        return
+
+    # sets second page as active sheet
+    ws = wb[wb.sheetnames[1]]
+    output_filename = None
 
     # define headers for columns
     headers = [
@@ -205,7 +212,7 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
             if data.get(date_field):
                 cell = ws[f"{get_column_letter(headers.index(date_field)+1)}{row_num}"]
                 cell.value = data[date_field]
-                cell.style = date_style
+                cell.number_format = "YYYY-MM-DD HH:MM:SS"
 
         ws[f"I{row_num}"] = data["lastScreenshotAttemptStatus"]
         ws[f"J{row_num}"] = data["lastScreenshotUrl"]
@@ -213,8 +220,12 @@ def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
         ws[f"L{row_num}"] = data["localStorageAvailable"]
 
     # Save workbook
-    wb.save(filename)
-    print(f"Data written to {filename}")
+    if output_filename is None:
+        current_date = datetime.now().strftime("%Y-%m-%d")  # Format: YYYY-MM-DD
+        output_filename = f"datto_report_{current_date}.xlsx"
+
+    wb.save(output_filename)
+    print(f"Data written to {output_filename}")
 
 
 # Datto - API call process function
@@ -232,6 +243,7 @@ def datto_report():
         return
 
     full_backup_data = []
+    print(f"Polling devices for backup data")
     
     # Iterate over devices
     for device in devices:
