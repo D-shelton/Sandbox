@@ -184,6 +184,7 @@ def parse_storage(storage):
     return f"{size} {units}"
     
 # Excel - writes data to excel workbook using pre-defined headers
+# Input for device_backup_data will be a dict
 # libs -  openpyxl, datetime
 def write_xlsx(device_backup_data, filename="datto_report.xlsx"):
     # Looks for template defined in load_workbook
